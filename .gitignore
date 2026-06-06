@@ -1,3 +1,43 @@
-X-AnyLabeling-dev/mobileclip_blt.ts
+SelfEvolvingRecognition/mobileclip_blt.ts
 yolo/models/yoloe_11s-r20250524/mobileclip_blt.pt
 yolo/models/yoloe_11s-r20250524/mobileclip_blt.ts
+
+# Python/runtime cache
+__pycache__/
+*.py[cod]
+*.pyo
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# IDE/local tool state
+.vscode/
+.idea/
+.playwright-mcp/
+
+# Generated experiment outputs
+outputs/
+**/outputs/
+**/runs/
+**/.replay_work/
+**/registry/
+**/distill/
+**/_backup_clean_*/
+
+# Training checkpoints generated during runs
+**/weights/best.pt
+**/weights/last.pt
+
+# Local captures and media samples
+capter/
+vedio/
+
+# Temporary files
+*.log
+*.tmp
+manifest.csv

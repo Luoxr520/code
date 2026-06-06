@@ -1,84 +1,236 @@
-# 项目使用总览
+﻿# SelfEvolvingRecognition
 
-这个目录下面放了多个项目和实验。为了方便别人接手使用，建议从本文件开始看，再进入对应子目录阅读更具体的启动说明。
+SelfEvolvingRecognition is a self-evolving recognition system built around
+YOLO object detection. It is designed for camera streams, video streams, and
+image datasets that need to improve over time without stopping recognition.
 
-我没有删除、移动或重命名现有文件和文件夹。`datasets`、`models`、`outputs`、`assets`、`.git`、`.vscode` 等目录都可能被代码或工具引用，分享给别人时请尽量保持原有相对路径。
+The system forms a closed loop:
 
-## 目录说明
+1. Capture new images from recognition scenes.
+2. Generate candidate annotations.
+3. Let the user review annotation quality.
+4. Publish only selected samples as a YOLO training dataset.
+5. Train YOLO online while the current model keeps serving recognition.
+6. Promote a better model, hold a worse model, or roll back manually.
+7. Feed newly captured samples back into the next annotation round.
 
-| 目录 | 作用 | 推荐入口 |
-| --- | --- | --- |
-| `X-AnyLabeling-dev` | 主项目，X-AnyLabeling 标注工具源码 | `X-AnyLabeling-dev/LOCAL_SETUP.md` |
-| `yolo` | YOLO 推理、自动标注流程实验，包含 COCO128 数据、模型、notebook 和输出 | `yolo/README.md` |
-| `yolo_world_reproduce` | YOLO-World 复现实验，包含图片、模型、脚本和输出 | `yolo_world_reproduce/README.md` |
-| `test` | 前端 HTML 演示，包括普通页面和摄像头交互页面 | `test/README.md` |
-| `races` | C++/CMake 最小示例项目 | `races/README.md` |
-| `X-AnyLabeling-dev.zip` | 主项目压缩包备份或分发包 | 保留即可 |
+## Main Features
 
-## 推荐基础环境
+- Continuous data capture from cameras, videos, or image folders.
+- Automatic annotation candidates for newly collected images.
+- Manual review before data enters training.
+- Quality triage with `keep`, `review`, and `reject` states.
+- Selective dataset publishing: high-quality samples may be exported, skipped,
+  or held for review by the user.
+- Direct export to YOLO-ready `images`, `labels`, `classes.txt`, and
+  `data.yaml` files.
+- Online YOLO training while recognition remains active.
+- Model registry with frozen validation metrics, promotion gates, and rollback.
+- Hot-swap inference that loads a promoted model without interrupting frames.
+- Detection-box smoothing during model updates and training convergence.
 
-- 操作系统：Windows 10/11 优先，Python 项目也可在 Linux/macOS 上按官方依赖自行适配。
-- Python：建议 Python 3.12；`X-AnyLabeling-dev` 要求 Python 3.11 及以上。
-- 环境管理：推荐每个项目单独使用 `venv` 或 conda 环境，避免包版本互相影响。
-- GPU：不是所有流程都必须用 GPU。YOLO 类实验可以用 CPU 先跑通，速度会慢一些。
-- 浏览器：`test/camera-interact.html` 需要现代浏览器、网络 CDN 访问和摄像头权限。
-- C++：`races` 需要 CMake 3.30 及以上和支持 C++20 的编译器。
+## System Loop
 
-## 主项目快速启动
-
-```powershell
-cd X-AnyLabeling-dev
-py -3.12 -m venv .venv-cpu
-.\.venv-cpu\Scripts\Activate.ps1
-python -m pip install -U pip uv
-uv pip install -e ".[cpu]"
-xanylabeling checks
-xanylabeling
+```text
+camera / video / image dataset
+        |
+        v
+capture useful frames
+        |
+        v
+auto annotation + human review
+        |
+        v
+quality triage: keep / review / reject
+        |
+        v
+selective YOLO dataset publishing
+        |
+        v
+online training + frozen validation
+        |
+        v
+model registry: promote / hold / rollback
+        |
+        v
+hot-swap inference without recognition interruption
+        |
+        v
+new captured data enters the next loop
 ```
 
-GPU 版本、开发依赖和常见问题见 `X-AnyLabeling-dev/LOCAL_SETUP.md`。
+## Repository Layout
 
-## YOLO 实验快速启动
+| Path | Purpose |
+| --- | --- |
+| `SelfEvolvingRecognition` | Main system implementation, GUI, annotation review, dataset publishing, online training, model registry, and live recognition. |
+| `SelfEvolvingRecognition/anylabeling/services/auto_training` | Core self-evolving training and inference services. The package name is kept as an internal implementation detail. |
+| `SelfEvolvingRecognition/anylabeling/views/training` | Training configuration and GUI integration. |
+| `yolo` | YOLO sample data, base model, inference script, and reproduction notebooks. |
+
+Important implementation files:
+
+| File | Purpose |
+| --- | --- |
+| `collector.py` | Captures useful frames and prepares them for the next annotation round. |
+| `publish_dataset.py` | Scans annotation quality, writes a manifest, and exports selected samples to YOLO format. |
+| `train_with_registry.py` | Runs online training, evaluates on a frozen validation set, registers model versions, and supports rollback. |
+| `model_registry.py` | Stores model versions, metrics, current model state, and rollback points. |
+| `model_server.py` | Keeps inference alive while promoted models are loaded and hot-swapped. |
+| `box_smoother.py` | Smooths detection boxes across frames and model switches. |
+| `live_runtime.py` | Runs live recognition with model hot-swap and box smoothing. |
+
+## Environment
+
+Recommended setup:
+
+- Windows 10/11
+- Python 3.11 or 3.12
+- CPU for full reproduction, GPU for faster training
+
+```powershell
+git clone https://github.com/Luoxr520/code.git
+cd code
+
+py -3.12 -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install -U pip uv
+```
+
+Install the main system:
+
+```powershell
+cd SelfEvolvingRecognition
+uv pip install -e ".[cpu]"
+pip install -r ..\yolo\requirements.txt
+ser checks
+ser
+cd ..
+```
+
+For GPU usage, replace `.[cpu]` with `.[gpu]` or `.[gpu-cu11]`. Use separate
+virtual environments for CPU, CUDA 11, and CUDA 12 to avoid runtime conflicts.
+
+## Full Reproduction
+
+Run the commands below from the repository root unless noted otherwise.
+
+### 1. Verify YOLO Inference
 
 ```powershell
 cd yolo
-py -3.12 -m venv .venv
-.\.venv\Scripts\Activate.ps1
-python -m pip install -U pip
-pip install -r requirements.txt
-python scripts\infer_coco128.py --device cpu
+python scripts\infer_coco128.py --model models\yolo26n.pt --source datasets\coco128\images\train2017 --output outputs\stage1_coco128_inference --device cpu --limit 20
+cd ..
 ```
 
-输出会写到 `yolo/outputs/stage1_coco128_inference`。更多 notebook 和 X-AnyLabeling 自动标注流程见 `yolo/README.md`。
+The output is written to `yolo/outputs/stage1_coco128_inference`.
 
-## YOLO-World 复现实验快速启动
+### 2. Review Auto Annotations
 
 ```powershell
-cd yolo_world_reproduce
-py -3.12 -m venv .venv
-.\.venv\Scripts\Activate.ps1
-python -m pip install -U pip
-pip install -r requirements.txt
-python scripts\run_yolo_world.py --device cpu
+cd SelfEvolvingRecognition
+ser ..\yolo\datasets\raw_images\unlabeled --output ..\yolo\datasets\labeled_yolo_v1 --labels ..\yolo\datasets\labeled_yolo_v1\classes.txt
+cd ..
 ```
 
-输出会写到 `yolo_world_reproduce/outputs`。
+Use the GUI to review, correct, delete, or add boxes. Save the reviewed JSON
+annotations before publishing a dataset.
 
-## 前端演示快速启动
-
-普通页面可以直接双击 `test/index.html`。摄像头交互页面建议通过本地服务访问：
+### 3. Scan Annotation Quality
 
 ```powershell
-cd test
-python -m http.server 8000
+cd SelfEvolvingRecognition
+ser-publish scan ..\yolo\datasets\labeled_yolo_v1 --images-dir ..\yolo\datasets\raw_images\unlabeled --manifest ..\yolo\manifest.csv
+cd ..
 ```
 
-然后打开 `http://localhost:8000/camera-interact.html`。
+`manifest.csv` contains one row per image. The `publish` column controls
+whether the sample enters the next training dataset.
 
-## 分享给别人前的检查清单
+Default triage:
 
-1. 保持目录结构不变，尤其是 `datasets`、`models`、`outputs` 这些相对路径。
-2. 大模型文件如 `.pt`、`.onnx`、`.ts` 需要一起提供，否则推理脚本或自动标注会缺模型。
-3. 接收方先创建虚拟环境，再安装对应目录的依赖，不要直接在系统 Python 里混装。
-4. notebook 建议从项目根目录或 `scripts` 目录打开，避免旧的绝对路径兜底逻辑被触发。
-5. `X-AnyLabeling-dev` 当前是 Git 仓库，分享源码时可以保留 `.git`，只发可运行包时也可以按需压缩整个目录。
+- `keep`: selected by default for publishing.
+- `review`: needs user review before publishing.
+- `reject`: not selected for training.
+
+The user can edit `publish` manually. A high-quality sample can still be held
+back if it should not enter the next training round.
+
+### 4. Publish a YOLO Dataset
+
+```powershell
+cd SelfEvolvingRecognition
+ser-publish export ..\yolo\manifest.csv --out ..\yolo\datasets --images-dir ..\yolo\datasets\raw_images\unlabeled --per-class-val 1 --verify-images
+cd ..
+```
+
+After publishing, `yolo/datasets` contains:
+
+- `data.yaml`
+- `classes.txt`
+- `frozen_val.json`
+- `images/train`
+- `images/val`
+- `labels/train`
+- `labels/val`
+
+### 5. Train Online With Registry Control
+
+```powershell
+cd SelfEvolvingRecognition
+ser-train --dataset ..\yolo\datasets train --base ..\yolo\models\yolo26n.pt --epochs 10 --imgsz 640 --batch 8 --device cpu --workers 0 --promote-margin 0.0
+cd ..
+```
+
+The training command evaluates the new model on the frozen validation split and
+writes the decision to `yolo/datasets/registry/registry.json`.
+
+List registered models:
+
+```powershell
+cd SelfEvolvingRecognition
+ser-train --dataset ..\yolo\datasets list
+cd ..
+```
+
+Roll back to a previous model:
+
+```powershell
+cd SelfEvolvingRecognition
+ser-train --dataset ..\yolo\datasets rollback m_0001
+cd ..
+```
+
+### 6. Run Live Recognition With Hot-Swap
+
+Start recognition from a camera:
+
+```powershell
+cd SelfEvolvingRecognition
+ser-live --dataset ..\yolo\datasets --source 0 --device cpu
+cd ..
+```
+
+Run on a video file and save the result:
+
+```powershell
+cd SelfEvolvingRecognition
+ser-live --dataset ..\yolo\datasets --source path\to\input.mp4 --save ..\yolo\outputs\live_result.mp4 --device cpu
+cd ..
+```
+
+While live recognition is running, launch another training command. When a new
+model passes the promotion gate, the live process loads and switches to it
+without stopping recognition.
+
+## Cleanup Policy
+
+This repository keeps source code, reproduction scripts, required sample data,
+and the base YOLO model. Runtime output should stay untracked:
+
+- Python caches: `__pycache__`, `.pyc`
+- IDE settings: `.vscode`, `.idea`
+- Training outputs: `runs`, `weights/best.pt`, `weights/last.pt`
+- Inference outputs: `outputs`
+- Temporary registry, replay, and distillation artifacts
+- Local camera captures and private video material

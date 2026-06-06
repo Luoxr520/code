@@ -1,0 +1,5 @@
+﻿type: ram
+name: ram_plus_swin_large_14m-r20240728
+provider: OPPO
+display_name: RAM++ (SwinL)
+model_path: models/ram_plus_swin_large_14m.onnx

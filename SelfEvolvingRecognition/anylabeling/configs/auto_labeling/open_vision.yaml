@@ -1,0 +1,10 @@
+﻿type: open_vision
+name: open_vision-r20241010
+provider: Others
+display_name: Open Vision
+text_encoder_type: bert-base-uncased  # modify this path to your own path
+model_path: models/open_vision_fsc147.pth
+box_threshold: 0.3
+# Segment-Anything-2 (large)
+encoder_model_path: models/sam2.1_hiera_large.encoder.onnx
+decoder_model_path: models/sam2.1_hiera_large.decoder.onnx

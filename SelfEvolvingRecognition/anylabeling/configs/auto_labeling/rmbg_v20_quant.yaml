@@ -1,0 +1,6 @@
+﻿type: rmbg
+name: rmbg_v20_quant-r20250530
+provider: BRIA-AI
+display_name: RMBG v2.0 Quantized
+version: 2.0
+model_path: models/bria-rmbg-2.0-quant.onnx

@@ -1,0 +1,15 @@
+﻿type: edge_sam
+name: edge_sam_with_chinese_clip-r20240131
+provider: Others
+display_name: EdgeSAM-CN-CLIP ViT-B-16
+# EdgeSAM
+encoder_model_path: models/edge_sam_encoder.onnx
+decoder_model_path: models/edge_sam_decoder.onnx
+# ChineseClip
+model_type: cn_clip
+model_arch: ViT-B-16
+txt_model_path: models/vit-b-16.txt.fp16.onnx
+img_model_path: models/vit-b-16.img.fp16.onnx
+txt_extra_path: models/vit-b-16.txt.fp16.onnx.extra_file
+img_extra_path: models/vit-b-16.img.fp16.onnx.extra_file
+classes: []

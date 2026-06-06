@@ -1,0 +1,9 @@
+﻿type: pulc_attribute
+name: pulc_vehicle_attribute-r20231111
+provider: PaddlePaddle
+display_name: Vehicle-Attribute Paddle-PULC
+model_path: models/pulc_vehicle_attribute.onnx
+classes: vehicle
+attributes:
+  Color: [["yellow", "orange", "green", "gray", "red", "blue", "white", "golden", "brown", "black"], -1]
+  Type: [["sedan", "suv", "van", "hatchback", "mpv", "pickup", "bus", "truck", "estate"], -1]

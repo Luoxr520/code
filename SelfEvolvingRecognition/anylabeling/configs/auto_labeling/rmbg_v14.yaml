@@ -1,0 +1,5 @@
+﻿type: rmbg
+name: rmbg_v14-r20240908
+provider: BRIA-AI
+display_name: RMBG v1.4
+model_path: models/bria-rmbg-1.4.onnx

@@ -1,7 +1,0 @@
-# ninja log v6
-1	512	7634059496417455	CMakeFiles/races.dir/main.cpp.obj.ddi	3e52520375ce156a
-512	543	7634059501806572	CMakeFiles/races.dir/CXX.dd	ac0ea5c6343d8d29
-512	543	7634059501806572	D:/races/cmake-build-debug/CMakeFiles/races.dir/CXXModules.json	ac0ea5c6343d8d29
-512	543	7634059501806572	CMakeFiles/races.dir/main.cpp.obj.modmap	ac0ea5c6343d8d29
-544	1400	7634059501836578	CMakeFiles/races.dir/main.cpp.obj	11b0d9e1dfa0aa2c
-1405	1543	7634059510452726	races.exe	2c53dfe0c27fecfb
